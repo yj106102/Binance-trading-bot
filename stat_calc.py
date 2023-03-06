@@ -2,6 +2,7 @@ from tradinghelper.models import Record
 
 
 def get_trade_records():
+    # 데이터베이스의 전략 기록을 배열으로 반환
     result = []
     records = Record.objects.all()
     for record in records:
