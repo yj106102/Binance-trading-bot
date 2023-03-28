@@ -167,6 +167,8 @@ cython_debug/
 # 설정 파일
 settings.json
 
+#테스트 파일
+test.py
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
