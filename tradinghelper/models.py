@@ -11,4 +11,5 @@ class Record(models.Model):
     params = models.CharField(max_length=100)
     # 파라미터
     def __str__(self):
-        return self.strategy_type
+        return str(self.strategy_type)
+    
