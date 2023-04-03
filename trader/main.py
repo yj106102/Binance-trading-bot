@@ -16,6 +16,7 @@ class Trade(Enum):
 event = Event()
 binance = common.get_binance()
 TRADING_BALANCE_RATIO = 0.2
+DEFAULT_ITV = "2m"
 
 position_info = {
     "amount": {},
@@ -65,7 +66,7 @@ def rsi_calc(ohlc: pd.DataFrame, period: int = 14):
     return pd.Series(100 - (100 / (1 + RS)), name="RSI")
 
 
-def get_rsi(symbol: str, itv:str="3m") -> float:
+def get_rsi(symbol: str, itv:str=DEFAULT_ITV) -> float:
     ohlcv = binance.fetch_ohlcv(symbol=symbol, timeframe=itv, limit=200)
     df = pd.DataFrame(ohlcv)
     rsi = rsi_calc(df, 14).iloc[-1]
@@ -141,11 +142,10 @@ def record_result(type:str, symbol:str, params:dict) -> None:
 
 
 def start_trade(symbols:list[str], params:dict) -> None:
+    # params 
     new_params = params["params"]
     type = params["type"]
     amount = position_info["amount"]
-    if type != "RSI":
-        print("Wrong trade type.")
 
     for symbol in symbols:
         amount[symbol] = 0
