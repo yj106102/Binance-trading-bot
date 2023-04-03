@@ -23,7 +23,7 @@ position_info = {
 }  # amount는 현재 포지션이 롱이면 +, 숏이면 -, 없으면 0, prev_price는 트레이딩 시작 시 가격
 
 
-def check_trade_condition(type, symbol, params):
+def check_trade_condition(type: str, symbol: str, params: dict) -> bool:
     # 트레이딩 시작 조건 만족 확인
     if type == "RSI":
         threshold = params["open_rsi_threshold"]
@@ -37,7 +37,7 @@ def check_trade_condition(type, symbol, params):
         return Trade.NONE
 
 
-def check_close_condition(type, symbol, params):
+def check_close_condition(type: str, symbol: str, params: dict) -> bool:
     # 트레이딩 종료 조건 만족 확인
     amount = position_info["amount"]
     if type == "RSI":
@@ -65,14 +65,14 @@ def rsi_calc(ohlc: pd.DataFrame, period: int = 14):
     return pd.Series(100 - (100 / (1 + RS)), name="RSI")
 
 
-def get_rsi(symbol, itv="3m"):
+def get_rsi(symbol: str, itv:str="3m") -> float:
     ohlcv = binance.fetch_ohlcv(symbol=symbol, timeframe=itv, limit=200)
     df = pd.DataFrame(ohlcv)
     rsi = rsi_calc(df, 14).iloc[-1]
     return rsi
 
 
-def get_price(symbol):
+def get_price(symbol:str) -> float:
     # 현재 가격 계산
     last_price = binance.fetch_ticker(symbol)["last"]
 
@@ -86,7 +86,7 @@ def get_trade_amount():
     return balance * TRADING_BALANCE_RATIO
 
 
-def commit_trade(symbol, whether_to_trade):
+def commit_trade(symbol:str, whether_to_trade:Trade) -> None:
     # 트레이딩 실행
     global position_info
     price = get_price(symbol)
@@ -101,9 +101,10 @@ def commit_trade(symbol, whether_to_trade):
         print(f"Selling {symbol} for {amount} USDT")
         position_info["amount"][symbol] = -amount
         binance.create_market_order(symbol, "sell", amount)
+    return
 
 
-def commit_close(type, symbol):
+def commit_close(symbol:str) -> None:
     # 트레이딩 종료
     amount = position_info["amount"]
     if amount[symbol] < 0:
@@ -119,13 +120,14 @@ def commit_close(type, symbol):
         binance.create_market_order(
             symbol, "sell", abs(amount), params={"reduceOnly": True}
         )
+    return
 
 
 def get_event():
     return event
 
 
-def record_result(type, symbol, params):
+def record_result(type:str, symbol:str, params:dict) -> None:
     # 결과를 데이터베이스에 저장
     global position_info
     benefit = position_info["amount"][symbol] * (
@@ -135,9 +137,10 @@ def record_result(type, symbol, params):
         Record.objects.create(
             strategy_type=type, symbol=symbol, benefit=benefit, params=params
         )
+    return
 
 
-def start_trade(symbols, params):
+def start_trade(symbols:list[str], params:dict) -> None:
     new_params = params["params"]
     type = params["type"]
     amount = position_info["amount"]
@@ -152,17 +155,16 @@ def start_trade(symbols, params):
         if event.is_set():
             # 종료 신호
             for symbol in symbols:
-                commit_close(type, symbol)
+                commit_close( symbol)
             print("--------Trading bot stopped--------")
             event.clear()
             return
         for symbol in symbols:
             if amount[symbol] != 0:
                 whether_to_close = check_close_condition(type, symbol, new_params)
-                print(whether_to_close)
                 if whether_to_close:
                     record_result(type, symbol, new_params)
-                    commit_close(type, symbol)
+                    commit_close( symbol)
 
             else:
                 whether_to_trade = check_trade_condition(type, symbol, new_params)
