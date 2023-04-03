@@ -47,12 +47,7 @@ def check_close_condition(type, symbol, params):
                 return get_rsi(symbol) > threshold
             if amount[symbol] < 0:
                 return get_rsi(symbol) < 100 - threshold
-            return False
-        else:
-            return False
-
-    else:
-        return False
+    return False
 
 
 def rsi_calc(ohlc: pd.DataFrame, period: int = 14):
@@ -133,11 +128,9 @@ def get_event():
 def record_result(type, symbol, params):
     # 결과를 데이터베이스에 저장
     global position_info
-    print(position_info["prev_price"][symbol], get_price(symbol))
     benefit = position_info["amount"][symbol] * (
         position_info["prev_price"][symbol] - get_price(symbol)
     )
-    print("benefit: {}".format(benefit))
     if type == "RSI":
         Record.objects.create(
             strategy_type=type, symbol=symbol, benefit=benefit, params=params
@@ -149,13 +142,13 @@ def start_trade(symbols, params):
     type = params["type"]
     amount = position_info["amount"]
     if type != "RSI":
-        print("잘못된 거래 타입입니다.")
+        print("Wrong trade type.")
 
     for symbol in symbols:
         amount[symbol] = 0
-
+    print("--------Trading bot is running..--------")
     while True:
-        print("Trading bot is running...")
+        
         if event.is_set():
             # 종료 신호
             for symbol in symbols:
